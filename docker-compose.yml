@@ -1,0 +1,44 @@
+services:
+  joypaw-landing:
+    build: .
+    container_name: joypaw-landing
+    restart: unless-stopped
+    networks:
+      - dokploy-network
+    labels:
+      - "traefik.enable=true"
+
+      # HTTPS — joypaw.tech
+      - "traefik.http.routers.joypaw-landing.rule=Host(`joypaw.tech`)"
+      - "traefik.http.routers.joypaw-landing.entrypoints=websecure"
+      - "traefik.http.routers.joypaw-landing.tls=true"
+      - "traefik.http.routers.joypaw-landing.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.joypaw-landing.service=joypaw-landing-svc"
+
+      # HTTPS — www.joypaw.tech
+      - "traefik.http.routers.joypaw-landing-www.rule=Host(`www.joypaw.tech`)"
+      - "traefik.http.routers.joypaw-landing-www.entrypoints=websecure"
+      - "traefik.http.routers.joypaw-landing-www.tls=true"
+      - "traefik.http.routers.joypaw-landing-www.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.joypaw-landing-www.service=joypaw-landing-svc"
+
+      # HTTP → HTTPS redirect — joypaw.tech
+      - "traefik.http.routers.joypaw-landing-http.rule=Host(`joypaw.tech`)"
+      - "traefik.http.routers.joypaw-landing-http.entrypoints=web"
+      - "traefik.http.routers.joypaw-landing-http.middlewares=joypaw-https-redirect"
+
+      # HTTP → HTTPS redirect — www.joypaw.tech
+      - "traefik.http.routers.joypaw-landing-www-http.rule=Host(`www.joypaw.tech`)"
+      - "traefik.http.routers.joypaw-landing-www-http.entrypoints=web"
+      - "traefik.http.routers.joypaw-landing-www-http.middlewares=joypaw-https-redirect"
+
+      # Redirect middleware
+      - "traefik.http.middlewares.joypaw-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.joypaw-https-redirect.redirectscheme.permanent=true"
+
+      # Service
+      - "traefik.http.services.joypaw-landing-svc.loadbalancer.server.port=80"
+
+networks:
+  dokploy-network:
+    external: true
